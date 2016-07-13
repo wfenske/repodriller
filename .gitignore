@@ -12,3 +12,6 @@ target/
 *.DS_Store
 .idea/
 *.iml
+/metricminer2/
+.rsync-filter
+lib/

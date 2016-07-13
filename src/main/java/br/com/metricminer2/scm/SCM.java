@@ -22,7 +22,6 @@ import br.com.metricminer2.domain.ChangeSet;
 import br.com.metricminer2.domain.Commit;
 
 public interface SCM {
-
 	List<ChangeSet> getChangeSets();
 	Commit getCommit(String id);
 	ChangeSet getHead();
@@ -32,4 +31,13 @@ public interface SCM {
 	void checkout(String id);
 	String blame(String file, String currentCommit, Integer line);
 
+    /**
+     * Disable getting branch information for a commit. This operation is
+     * <em>optional</em> (depends on the repository type), but will never throw
+     * an error. Invoking this method on a large GIT repository may
+     * significantly improve the analysis speed.
+     * 
+     * @return the SCM on which the method was invoked
+     */
+    SCM disableBranches();
 }

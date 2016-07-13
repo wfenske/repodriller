@@ -103,6 +103,18 @@ public class GitRepositoryTest {
 		Assert.assertTrue(commit.getBranches().contains("master"));
 		Assert.assertTrue(commit.getBranches().contains("b2"));
 	}
+
+    @Test
+    public void getNoBranchesFromCommit() {
+        GitRepository noBranchesGit1 = new GitRepository(path1);
+        noBranchesGit1.disableBranches();
+
+        Commit commit = noBranchesGit1.getCommit("a997e9d400f742003dea601bb05a9315d14d1124");
+        Assert.assertTrue(commit.getBranches().isEmpty());
+
+        commit = noBranchesGit1.getCommit("866e997a9e44cb4ddd9e00efe49361420aff2559");
+        Assert.assertTrue(commit.getBranches().isEmpty());
+    }
 	
 	@Test 
 	public void shouldDetailACommit() {

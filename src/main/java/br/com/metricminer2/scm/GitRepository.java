@@ -64,6 +64,7 @@ public class GitRepository implements SCM {
 	private static final int MAX_SIZE_OF_A_DIFF = 100000;
 	private static final int MAX_NUMBER_OF_FILES_IN_A_COMMIT = 200;
 	private String path;
+    private boolean extractBranches = true;
 
 	private static Logger log = Logger.getLogger(GitRepository.class);
 
@@ -112,6 +113,7 @@ public class GitRepository implements SCM {
 
 	}
 
+	@Override
 	public ChangeSet getHead() {
 		Git git = null;
 		try {
@@ -161,14 +163,21 @@ public class GitRepository implements SCM {
 		return date;
 	}
 
+	private Git theGit = null;
+	private Repository theRepo = null;
+
 	@Override
 	public Commit getCommit(String id) {
-		Git git = null;
+		// Git git = null;
 		try {
-			git = Git.open(new File(path));
-			Repository repo = git.getRepository();
+			// git = Git.open(new File(path));
+			if (theGit == null)
+				theGit = Git.open(new File(path));
+			// Repository repo = git.getRepository();
+			if (theRepo == null)
+				theRepo = theGit.getRepository();
 
-			Iterable<RevCommit> commits = git.log().add(repo.resolve(id)).call();
+			Iterable<RevCommit> commits = theGit.log().add(theRepo.resolve(id)).call();
 			Commit theCommit = null;
 
 			for (RevCommit jgitCommit : commits) {
@@ -190,7 +199,7 @@ public class GitRepository implements SCM {
 				
 				setBranches(theCommit);
 
-				List<DiffEntry> diffsForTheCommit = diffsForTheCommit(repo, jgitCommit);
+				List<DiffEntry> diffsForTheCommit = diffsForTheCommit(theRepo, jgitCommit);
 				if (diffsForTheCommit.size() > MAX_NUMBER_OF_FILES_IN_A_COMMIT) {
 					log.error("commit " + id + " has more than files than the limit");
 					throw new RuntimeException("commit " + id + " too big, sorry");
@@ -206,8 +215,8 @@ public class GitRepository implements SCM {
 					String diffText = "";
 					String sc = "";
 					if (diff.getChangeType() != ChangeType.DELETE) {
-						diffText = getDiffText(repo, diff);
-						sc = getSourceCode(repo, diff);
+						diffText = getDiffText(theRepo, diff);
+						sc = getSourceCode(theRepo, diff);
 					}
 
 					if (diffText.length() > MAX_SIZE_OF_A_DIFF) {
@@ -226,20 +235,32 @@ public class GitRepository implements SCM {
 		} catch (Exception e) {
 			throw new RuntimeException("error detailing " + id + " in " + path, e);
 		} finally {
-			if (git != null)
-				git.close();
+			// if (git != null)
+			// git.close();
 		}
 	}
 
+    @Override
+    public GitRepository disableBranches() {
+        this.extractBranches = false;
+        log.warn("Setting branches has been disabled. Contents of the commits `branches' field will be undefined.");
+        return this;
+    }
 
 	private void setBranches(Commit theCommit) {
-		// JGit doesn't support it, so we need to do it manually...
+        if (extractBranches) {
+            setActualBranch(theCommit);
+		}
+    }
+
+    private void setActualBranch(Commit theCommit) {
+        // JGit doesn't support it, so we need to do it manually...
 		String result = new SimpleCommandExecutor().execute("git branch --contains " + theCommit.getHash(), path);
 		String[] lines = result.split("\n");
 		for(String line : lines) {
 			theCommit.addBranch(line.replace("*", "").trim());
 		}
-	}
+    }
 
 	private List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException, AmbiguousObjectException,
 			IncorrectObjectTypeException {
@@ -296,6 +317,7 @@ public class GitRepository implements SCM {
 		}
 	}
 
+	@Override
 	public void checkout(String hash) {
 		Git git = null;
 		try {
@@ -323,6 +345,7 @@ public class GitRepository implements SCM {
 		}
 	}
 
+	@Override
 	public List<RepositoryFile> files() {
 		List<RepositoryFile> all = new ArrayList<RepositoryFile>();
 		for (File f : getAllFilesInPath()) {
@@ -338,6 +361,7 @@ public class GitRepository implements SCM {
 		return f.getName().equals(".DS_Store");
 	}
 
+	@Override
 	public void reset() {
 		Git git = null;
 		try {
