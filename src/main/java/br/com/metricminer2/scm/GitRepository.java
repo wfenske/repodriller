@@ -64,7 +64,7 @@ public class GitRepository implements SCM {
 	private static final int MAX_SIZE_OF_A_DIFF = 100000;
 	private static final int MAX_NUMBER_OF_FILES_IN_A_COMMIT = 200;
 	private String path;
-    private boolean extractBranches = true;
+	private boolean extractBranches = true;
 
 	private static Logger log = Logger.getLogger(GitRepository.class);
 
@@ -182,32 +182,37 @@ public class GitRepository implements SCM {
 
 			for (RevCommit jgitCommit : commits) {
 
-				Developer author = new Developer(jgitCommit.getAuthorIdent().getName(), jgitCommit.getAuthorIdent().getEmailAddress());
-				Developer committer = new Developer(jgitCommit.getCommitterIdent().getName(), jgitCommit.getCommitterIdent().getEmailAddress());
+				Developer author = new Developer(jgitCommit.getAuthorIdent().getName(),
+						jgitCommit.getAuthorIdent().getEmailAddress());
+				Developer committer = new Developer(jgitCommit.getCommitterIdent().getName(),
+						jgitCommit.getCommitterIdent().getEmailAddress());
 
 				String msg = jgitCommit.getFullMessage().trim();
 				String hash = jgitCommit.getName().toString();
 				long epoch = jgitCommit.getCommitTime();
-				String parent = (jgitCommit.getParentCount() > 0) ? jgitCommit.getParent(0).getName().toString() : "";
+				String parent = (jgitCommit.getParentCount() > 0)
+						? jgitCommit.getParent(0).getName().toString() : "";
 
 				GregorianCalendar date = new GregorianCalendar();
 				date.setTime(new Date(epoch * 1000L));
 
 				boolean merge = false;
-				if(jgitCommit.getParentCount() > 1) merge = true;
+				if (jgitCommit.getParentCount() > 1)
+					merge = true;
 				theCommit = new Commit(hash, author, committer, date, msg, parent, merge);
-				
+
 				setBranches(theCommit);
 
 				List<DiffEntry> diffsForTheCommit = diffsForTheCommit(theRepo, jgitCommit);
 				if (diffsForTheCommit.size() > MAX_NUMBER_OF_FILES_IN_A_COMMIT) {
-					log.error("commit " + id + " has more than files than the limit");
+					log.warn("commit " + id + " has more than files than the limit");
 					throw new RuntimeException("commit " + id + " too big, sorry");
 				}
 
 				for (DiffEntry diff : diffsForTheCommit) {
 
-					ModificationType change = Enum.valueOf(ModificationType.class, diff.getChangeType().toString());
+					ModificationType change = Enum.valueOf(ModificationType.class,
+							diff.getChangeType().toString());
 
 					String oldPath = diff.getOldPath();
 					String newPath = diff.getNewPath();
@@ -220,10 +225,10 @@ public class GitRepository implements SCM {
 					}
 
 					if (diffText.length() > MAX_SIZE_OF_A_DIFF) {
-						log.error("diff for " + newPath + " too big");
+						log.warn("diff for " + newPath + " too big");
 						diffText = "-- TOO BIG --";
 					}
-					
+
 					theCommit.addModification(oldPath, newPath, change, diffText, sc);
 
 				}
@@ -240,33 +245,36 @@ public class GitRepository implements SCM {
 		}
 	}
 
-    @Override
-    public GitRepository disableBranches() {
-        this.extractBranches = false;
-        log.warn("Setting branches has been disabled. Contents of the commits `branches' field will be undefined.");
-        return this;
-    }
+	@Override
+	public GitRepository disableBranches() {
+		this.extractBranches = false;
+		log.warn(
+				"Setting branches has been disabled. Contents of the commits `branches' field will be undefined.");
+		return this;
+	}
 
 	private void setBranches(Commit theCommit) {
-        if (extractBranches) {
-            setActualBranch(theCommit);
+		if (extractBranches) {
+			setActualBranch(theCommit);
 		}
-    }
+	}
 
-    private void setActualBranch(Commit theCommit) {
-        // JGit doesn't support it, so we need to do it manually...
-		String result = new SimpleCommandExecutor().execute("git branch --contains " + theCommit.getHash(), path);
+	private void setActualBranch(Commit theCommit) {
+		// JGit doesn't support it, so we need to do it manually...
+		String result = new SimpleCommandExecutor()
+				.execute("git branch --contains " + theCommit.getHash(), path);
 		String[] lines = result.split("\n");
-		for(String line : lines) {
+		for (String line : lines) {
 			theCommit.addBranch(line.replace("*", "").trim());
 		}
-    }
+	}
 
-	private List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit) throws IOException, AmbiguousObjectException,
-			IncorrectObjectTypeException {
+	private List<DiffEntry> diffsForTheCommit(Repository repo, RevCommit commit)
+			throws IOException, AmbiguousObjectException, IncorrectObjectTypeException {
 
 		AnyObjectId currentCommit = repo.resolve(commit.getName());
-		AnyObjectId parentCommit = commit.getParentCount() > 0 ? repo.resolve(commit.getParent(0).getName()) : null;
+		AnyObjectId parentCommit = commit.getParentCount() > 0
+				? repo.resolve(commit.getParent(0).getName()) : null;
 
 		DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
 		df.setBinaryFileThreshold(2 * 1024); // 2 mb max a file
@@ -277,7 +285,8 @@ public class GitRepository implements SCM {
 
 		if (parentCommit == null) {
 			RevWalk rw = new RevWalk(repo);
-			diffs = df.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), commit.getTree()));
+			diffs = df.scan(new EmptyTreeIterator(),
+					new CanonicalTreeParser(null, rw.getObjectReader(), commit.getTree()));
 			rw.release();
 		} else {
 			diffs = df.scan(parentCommit, currentCommit);
@@ -288,7 +297,8 @@ public class GitRepository implements SCM {
 		return diffs;
 	}
 
-	private String getSourceCode(Repository repo, DiffEntry diff) throws MissingObjectException, IOException, UnsupportedEncodingException {
+	private String getSourceCode(Repository repo, DiffEntry diff)
+			throws MissingObjectException, IOException, UnsupportedEncodingException {
 
 		try {
 			ObjectReader reader = repo.newObjectReader();
@@ -299,7 +309,8 @@ public class GitRepository implements SCM {
 		}
 	}
 
-	private String getDiffText(Repository repo, DiffEntry diff) throws IOException, UnsupportedEncodingException {
+	private String getDiffText(Repository repo, DiffEntry diff)
+			throws IOException, UnsupportedEncodingException {
 		DiffFormatter df2 = null;
 		try {
 			String diffText;
@@ -325,7 +336,8 @@ public class GitRepository implements SCM {
 			git.reset().setMode(ResetType.HARD).call();
 			git.checkout().setName("master").call();
 			deleteMMBranch(git);
-			git.checkout().setCreateBranch(true).setName("mm").setStartPoint(hash).setForce(true).setOrphan(true).call();
+			git.checkout().setCreateBranch(true).setName("mm").setStartPoint(hash).setForce(true)
+					.setOrphan(true).call();
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -335,7 +347,8 @@ public class GitRepository implements SCM {
 		}
 	}
 
-	private void deleteMMBranch(Git git) throws GitAPIException, NotMergedException, CannotDeleteCurrentBranchException {
+	private void deleteMMBranch(Git git)
+			throws GitAPIException, NotMergedException, CannotDeleteCurrentBranchException {
 		List<Ref> refs = git.branchList().call();
 		for (Ref r : refs) {
 			if (r.getName().endsWith("mm")) {
@@ -393,18 +406,21 @@ public class GitRepository implements SCM {
 		try {
 			git = Git.open(new File(path));
 
-			Iterable<RevCommit> commits = git.log().add(git.getRepository().resolve(currentCommit)).call();
+			Iterable<RevCommit> commits = git.log().add(git.getRepository().resolve(currentCommit))
+					.call();
 			ObjectId prior = commits.iterator().next().getParent(0).getId();
 
-			BlameResult blameResult = git.blame().setFilePath(file).setStartCommit(prior).setFollowFileRenames(true).call();
+			BlameResult blameResult = git.blame().setFilePath(file).setStartCommit(prior)
+					.setFollowFileRenames(true).call();
 
 			return blameResult.getSourceCommit(line).getId().getName();
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
-			if (git != null)
+			if (git != null) {
 				git.close();
+			}
 		}
 
 	}

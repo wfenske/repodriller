@@ -88,8 +88,9 @@ public class SubversionRepository implements SCM {
 			SVNDirEntry firstRevision = repository.info("/", 0);
 			SVNDirEntry lastRevision = repository.info("/", SVNRevision.HEAD.getNumber());
 
-			return new SCMRepository(this, lastRevision.getURL().getPath(), path, String.valueOf(lastRevision.getRevision()), String.valueOf(firstRevision
-					.getRevision()));
+			return new SCMRepository(this, lastRevision.getURL().getPath(), path,
+					String.valueOf(lastRevision.getRevision()),
+					String.valueOf(firstRevision.getRevision()));
 
 		} catch (SVNException e) {
 			throw new RuntimeException("error in getHead() for " + path, e);
@@ -115,10 +116,12 @@ public class SubversionRepository implements SCM {
 
 			long startRevision = 0;
 			long endRevision = -1; // HEAD (the latest) revision
-			Collection log = repository.log(new String[] { "" }, null, startRevision, endRevision, true, true);
+			Collection log = repository.log(new String[] { "" }, null, startRevision, endRevision,
+					true, true);
 			for (Iterator iterator = log.iterator(); iterator.hasNext();) {
 				SVNLogEntry entry = (SVNLogEntry) iterator.next();
-				allCs.add(new ChangeSet(String.valueOf(entry.getRevision()), convertToCalendar(entry.getDate())));
+				allCs.add(new ChangeSet(String.valueOf(entry.getRevision()),
+						convertToCalendar(entry.getDate())));
 			}
 
 			return allCs;
@@ -146,17 +149,19 @@ public class SubversionRepository implements SCM {
 			long startRevision = revision;
 			long endRevision = revision;
 
-			Collection repositoryLog = repository.log(new String[] { "" }, null, startRevision, endRevision, true, true);
+			Collection repositoryLog = repository.log(new String[] { "" }, null, startRevision,
+					endRevision, true, true);
 
 			for (Iterator iterator = repositoryLog.iterator(); iterator.hasNext();) {
 				SVNLogEntry logEntry = (SVNLogEntry) iterator.next();
 
 				Commit commit = createCommit(logEntry);
 
-				List<Modification> modifications = getModifications(repository, url, revision, logEntry);
+				List<Modification> modifications = getModifications(repository, url, revision,
+						logEntry);
 
 				if (modifications.size() > MAX_NUMBER_OF_FILES_IN_A_COMMIT) {
-					log.error("commit " + id + " has more than files than the limit");
+					log.warn("commit " + id + " has more than files than the limit");
 					throw new RuntimeException("commit " + id + " too big, sorry");
 				}
 
@@ -176,13 +181,13 @@ public class SubversionRepository implements SCM {
 
 	private Commit createCommit(SVNLogEntry logEntry) {
 		Developer committer = new Developer(logEntry.getAuthor(), null);
-		Commit commit = new Commit(String.valueOf(logEntry.getRevision()), null, committer, convertToCalendar(logEntry.getDate()), logEntry.getMessage(),
-				"");
+		Commit commit = new Commit(String.valueOf(logEntry.getRevision()), null, committer,
+				convertToCalendar(logEntry.getDate()), logEntry.getMessage(), "");
 		return commit;
 	}
 
-	private List<Modification> getModifications(SVNRepository repository, SVNURL url, long revision, SVNLogEntry logEntry) throws SVNException,
-			UnsupportedEncodingException {
+	private List<Modification> getModifications(SVNRepository repository, SVNURL url, long revision,
+			SVNLogEntry logEntry) throws SVNException, UnsupportedEncodingException {
 
 		List<Modification> modifications = new ArrayList<Modification>();
 		for (Entry<String, SVNLogEntryPath> entry : logEntry.getChangedPaths().entrySet()) {
@@ -192,14 +197,16 @@ public class SubversionRepository implements SCM {
 
 			String sc = getSourceCode(repository, revision, e);
 
-			Modification modification = new Modification(e.getCopyPath(), e.getPath(), getModificationType(e), diffText, sc);
+			Modification modification = new Modification(e.getCopyPath(), e.getPath(),
+					getModificationType(e), diffText, sc);
 			modifications.add(modification);
 		}
 
 		return modifications;
 	}
 
-	private String getSourceCode(SVNRepository repository, long endRevision, SVNLogEntryPath e) throws SVNException, UnsupportedEncodingException {
+	private String getSourceCode(SVNRepository repository, long endRevision, SVNLogEntryPath e)
+			throws SVNException, UnsupportedEncodingException {
 		if (e.getType() == 'D')
 			return "";
 
@@ -210,9 +217,11 @@ public class SubversionRepository implements SCM {
 		return sc;
 	}
 
-	private String getDiffText(SVNRepository repository, SVNURL url, SVNLogEntryPath entry, long revision) {
+	private String getDiffText(SVNRepository repository, SVNURL url, SVNLogEntryPath entry,
+			long revision) {
 		try {
-			SVNClientManager clientManager = SVNClientManager.newInstance(null, repository.getAuthenticationManager());
+			SVNClientManager clientManager = SVNClientManager.newInstance(null,
+					repository.getAuthenticationManager());
 			SVNDiffClient diffClient = clientManager.getDiffClient();
 
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -220,11 +229,12 @@ public class SubversionRepository implements SCM {
 			SVNRevision startRevision = SVNRevision.create(revision - 1);
 			SVNRevision endRevision = SVNRevision.create(revision);
 
-			diffClient.doDiff(url, startRevision, startRevision, endRevision, SVNDepth.FILES, true, out);
+			diffClient.doDiff(url, startRevision, startRevision, endRevision, SVNDepth.FILES, true,
+					out);
 
 			String diffText = out.toString("UTF-8");
 			if (diffText.length() > MAX_SIZE_OF_A_DIFF) {
-				log.error("diff for " + entry.getPath() + " too big");
+				log.warn("diff for " + entry.getPath() + " too big");
 				diffText = "-- TOO BIG --";
 			}
 			return diffText;
@@ -247,11 +257,12 @@ public class SubversionRepository implements SCM {
 		return null;
 	}
 
-    @Override
-    public SubversionRepository disableBranches() {
-        log.warn("Branch information cannot be diabled for repositories of type " + this.getClass().getSimpleName());
-        return this;
-    }
+	@Override
+	public SubversionRepository disableBranches() {
+		log.warn("Branch information cannot be diabled for repositories of type "
+				+ this.getClass().getSimpleName());
+		return this;
+	}
 
 	@Override
 	public ChangeSet getHead() {
@@ -264,7 +275,8 @@ public class SubversionRepository implements SCM {
 			authenticateIfNecessary(repository);
 
 			SVNDirEntry entry = repository.info("/", -1);
-			return new ChangeSet(String.valueOf(entry.getRevision()), convertToCalendar(entry.getDate()));
+			return new ChangeSet(String.valueOf(entry.getRevision()),
+					convertToCalendar(entry.getDate()));
 
 		} catch (SVNException e) {
 			throw new RuntimeException("error in getHead() for " + path, e);
@@ -316,10 +328,12 @@ public class SubversionRepository implements SCM {
 
 			authenticateIfNecessary(repository);
 
-			SVNClientManager ourClientManager = SVNClientManager.newInstance(null, repository.getAuthenticationManager());
+			SVNClientManager ourClientManager = SVNClientManager.newInstance(null,
+					repository.getAuthenticationManager());
 			SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
 			updateClient.setIgnoreExternals(false);
-			updateClient.doCheckout(url, new File(workingCopyPath), revision, revision, SVNDepth.INFINITY, true);
+			updateClient.doCheckout(url, new File(workingCopyPath), revision, revision,
+					SVNDepth.INFINITY, true);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -341,10 +355,12 @@ public class SubversionRepository implements SCM {
 
 			authenticateIfNecessary(repository);
 
-			SVNClientManager ourClientManager = SVNClientManager.newInstance(null, repository.getAuthenticationManager());
+			SVNClientManager ourClientManager = SVNClientManager.newInstance(null,
+					repository.getAuthenticationManager());
 			SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
 			updateClient.setIgnoreExternals(false);
-			updateClient.doCheckout(url, new File(workingCopyPath), revision, revision, SVNDepth.INFINITY, true);
+			updateClient.doCheckout(url, new File(workingCopyPath), revision, revision,
+					SVNDepth.INFINITY, true);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -372,8 +388,9 @@ public class SubversionRepository implements SCM {
 			boolean ignoreMimeType = false;
 			boolean includeMergedRevisions = false;
 
-			logClient.doAnnotate(url, SVNRevision.UNDEFINED, SVNRevision.create(Integer.parseInt(currentCommit)), SVNRevision.HEAD, ignoreMimeType,
-					includeMergedRevisions, null, null);
+			logClient.doAnnotate(url, SVNRevision.UNDEFINED,
+					SVNRevision.create(Integer.parseInt(currentCommit)), SVNRevision.HEAD,
+					ignoreMimeType, includeMergedRevisions, null, null);
 
 			return String.valueOf(SVNRevision.create(Integer.parseInt(currentCommit)).getNumber());
 
@@ -401,7 +418,8 @@ public class SubversionRepository implements SCM {
 		if (!tmpDir.exists()) {
 			boolean created = tmpDir.mkdirs();
 			if (!created) {
-				throw new RuntimeException("Unable to create temporary folder for working copy in " + tmpDir);
+				throw new RuntimeException(
+						"Unable to create temporary folder for working copy in " + tmpDir);
 			}
 		}
 
