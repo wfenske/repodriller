@@ -25,7 +25,7 @@
     </category>
 
     <category name="de.ovgu.skunk">
-        <priority value="DEBUG"/>
+        <priority value="INFO"/>
         <appender-ref ref="main"/>
     </category>
 
