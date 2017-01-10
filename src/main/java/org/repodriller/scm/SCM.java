@@ -33,14 +33,4 @@ public interface SCM {
 	String blame(String file, String currentCommit, Integer line);
 	List<BlamedLine> blame(String file, String commitToBeBlamed, boolean priorCommit);
 	SCMRepository info();
-
-    /**
-     * Disable getting branch information for a commit. This operation is
-     * <em>optional</em> (depends on the repository type), but will never throw
-     * an error. Invoking this method on a large GIT repository may
-     * significantly improve the analysis speed.
-     * 
-     * @return the SCM on which the method was invoked
-     */
-    SCM disableBranches();
 }

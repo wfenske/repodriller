@@ -20,11 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -67,7 +63,6 @@ public class GitRepository implements SCM {
 	private static final String BRANCH_MM = "mm";
 
 	private String path;
-	private boolean extractBranches = true;
 	private String mainBranchName;
 	private int maxNumberFilesInACommit;
 	private int maxSizeOfDiff;
@@ -253,6 +248,8 @@ public class GitRepository implements SCM {
 	public Commit getCommit(String id) {
 		Git git = null;
 		try {
+			git = openRepository();
+			Repository repo = git.getRepository();
 			Iterable<RevCommit> commits = git.log().add(repo.resolve(id)).call();
 			Commit theCommit = null;
 
@@ -301,8 +298,8 @@ public class GitRepository implements SCM {
 					String diffText = "";
 					String sc = "";
 					if (diff.getChangeType() != ChangeType.DELETE) {
-						diffText = getDiffText(theRepo, diff);
-						sc = getSourceCode(theRepo, diff);
+						diffText = getDiffText(repo, diff);
+						sc = getSourceCode(repo, diff);
 					}
 
 					if (diffText.length() > maxSizeOfDiff) {
@@ -326,15 +323,7 @@ public class GitRepository implements SCM {
 		}
 	}
 
-	@Override
-	public GitRepository disableBranches() {
-		this.extractBranches = false;
-		log.warn("Setting branches has been disabled. Contents of the commits `branches' field will be undefined.");
-		return this;
-	}
-
 	private Set<String> getBranches(Git git, String hash) throws GitAPIException {
-		if (!extractBranches) return Collections.emptySet();
 		List<Ref> gitBranches = git.branchList().setContains(hash).call();
 		Set<String> mappedBranches = gitBranches.stream()
 				.map(

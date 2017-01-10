@@ -291,13 +291,6 @@ public class SubversionRepository implements SCM {
 	}
 
 	@Override
-	public SubversionRepository disableBranches() {
-		log.warn("Branch information cannot be diabled for repositories of type "
-				+ this.getClass().getSimpleName());
-		return this;
-	}
-
-	@Override
 	public ChangeSet getHead() {
 		SVNRepository repository = null;
 
