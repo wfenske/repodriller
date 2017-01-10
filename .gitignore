@@ -1,7 +1,5 @@
-test-repos/git-1/
-test-repos/git-2/
-src/test/resources/repo-1.txt
-src/test/resources/repo-1
+test-repos/svn-1
+test-repos/git-*/
 bin/
 target/
 *.class
@@ -12,6 +10,6 @@ target/
 *.DS_Store
 .idea/
 *.iml
-/metricminer2/
 .rsync-filter
 lib/
+/remoteGitTempDir/

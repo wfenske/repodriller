@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>br.usp</groupId>
-	<artifactId>metricminer</artifactId>
+	<groupId>org.repodriller</groupId>
+	<artifactId>repodriller</artifactId>
 	<packaging>jar</packaging>
-	<version>2.4.2-SNAPSHOT-no-git-branches</version>
-	<name>metricminer2</name>
-	<url>http://www.metricminer.org.br</url>
+	<version>1.2.2-SNAPSHOT-no-git-branches</version>
+	<name>repodriller</name>
+	<url>http://github.com/wfenske/repodriller</url>
 	<description>Framework for researchers in MSR</description>
 
 	<licenses>
@@ -21,7 +21,17 @@
 			<id>mauricioaniche</id>
 			<name>Mauricio Aniche</name>
 			<email>mauricioaniche@gmail.com</email>
-			<organization>University of Sao Paulo</organization>
+			<organization>Delft University of Technology</organization>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>-3</timezone>
+		</developer>
+		<developer>
+			<id>wfenske</id>
+			<name>Wolfram Fenske</name>
+			<email>wfenske@ovgu.de</email>
+			<organization>University of Magdeburg; Germany</organization>
 			<roles>
 				<role>developer</role>
 			</roles>
@@ -30,9 +40,9 @@
 	</developers>
 
 	<scm>
-		<url>http://github.com/mauricioaniche/metricminer2</url>
-		<connection>scm:git:git://github.com/mauricioaniche/metricminer2</connection>
-		<developerConnection>scm:git:git@github.com:mauricioaniche/metricminer2.git</developerConnection>
+		<url>http://github.com/wfenske/repodriller</url>
+		<connection>scm:git:git://github.com/wfenske/repodriller</connection>
+		<developerConnection>scm:git:git@github.com:wfenske/repodriller.git</developerConnection>
 	  <tag>HEAD</tag>
   	</scm>
 
@@ -48,22 +58,6 @@
 	</repositories>
 
 	<dependencies>
-
-		<dependency>
-			<groupId>org.eclipse.tycho</groupId>
-			<artifactId>org.eclipse.jdt.core</artifactId>
-			<version>3.10.0.v20140604-1726</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.core</groupId>
-			<artifactId>org.eclipse.core.runtime</artifactId>
-			<version>3.7.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.core</groupId>
-			<artifactId>org.eclipse.core.resources</artifactId>
-			<version>3.7.100</version>
-		</dependency>
 
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -97,17 +91,10 @@
 			<version>2.4</version>
 		</dependency>
 		
-		<!-- http://mvnrepository.com/artifact/commons-cli/commons-cli -->
 		<dependency>
-   			<groupId>commons-cli</groupId>
+			<groupId>commons-cli</groupId>
 			<artifactId>commons-cli</artifactId>
 			<version>1.3</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4-runtime</artifactId>
-			<version>4.5</version>
 		</dependency>
 
 		<dependency>
@@ -171,7 +158,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>br.com.metricminer2.MetricMiner2</mainClass>
+							<mainClass>org.repodriller.RepoDriller</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
@@ -194,12 +181,13 @@
 				</dependencies>
 			</plugin>
 
+			<!-- Disable GPG-signing (or verifying?) the built artifact -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<configuration>
-        			<skip>true</skip>
-    			</configuration>
+        				<skip>true</skip>
+				</configuration>
 				<executions>
 					<execution>
 						<id>sign-artifacts</id>
@@ -210,7 +198,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 	</build>
 
@@ -229,8 +216,8 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
 						<configuration>
-        					<skip>true</skip>
-    					</configuration>
+							<skip>true</skip>
+						</configuration>
 						<executions>
 							<execution>
 								<id>sign-artifacts</id>
