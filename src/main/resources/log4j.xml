@@ -14,12 +14,7 @@
         <appender-ref ref="main"/>
     </category>
 
-    <category name="br.com.metricminer2">
-        <priority value="WARN"/>
-        <appender-ref ref="main"/>
-    </category>
-
-    <category name="br.usp.aniche">
+    <category name="org.repodriller">
         <priority value="WARN"/>
         <appender-ref ref="main"/>
     </category>
