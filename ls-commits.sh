@@ -15,7 +15,6 @@ add_to_cp()
 }
 
 me_dir=$(dirname "$0")
-skunk_dir="$me_dir"/..
 maven_repo=$HOME/.m2/repository
 
 add_to_cp "${me_dir}"/target/classes
