@@ -283,8 +283,8 @@ public class GitRepository implements SCM {
                 TimeZone committerTimeZone = jgitCommit.getCommitterIdent().getTimeZone();
 
                 String msg = jgitCommit.getFullMessage().trim();
-                String hash = jgitCommit.getName().toString();
-                String parent = (jgitCommit.getParentCount() > 0) ? jgitCommit.getParent(0).getName().toString() : "";
+                final String hash = getCommitHash(jgitCommit);
+                final List<String> parents = getParents(jgitCommit);
 
                 GregorianCalendar authorDate = new GregorianCalendar();
                 authorDate.setTime(jgitCommit.getAuthorIdent().getWhen());
@@ -308,7 +308,7 @@ public class GitRepository implements SCM {
                     isCommitInMainBranch = branches.contains(this.mainBranchName);
                 }
 
-                theCommit = new Commit(hash, author, committer, authorDate, authorTimeZone, committerDate, committerTimeZone, msg, parent, merge, branches, isCommitInMainBranch);
+                theCommit = new Commit(hash, author, committer, authorDate, authorTimeZone, committerDate, committerTimeZone, msg, parents, merge, branches, isCommitInMainBranch);
 
                 List<DiffEntry> diffsForTheCommit = diffsForTheCommit(repo, jgitCommit);
                 if (diffsForTheCommit.size() > this.getMaxNumberFilesInACommit()) {
@@ -348,6 +348,29 @@ public class GitRepository implements SCM {
             throw new RuntimeException("error detailing " + id + " in " + path, e);
         } finally {
         }
+    }
+
+    private static String getCommitHash(RevCommit jgitCommit) {
+        return jgitCommit.getName().toString();
+    }
+
+    private List<String> getParents(RevCommit jgitCommit) {
+        final List<String> parents;
+        final int parentCount = jgitCommit.getParentCount();
+        switch (parentCount) {
+            case 0:
+                parents = Collections.emptyList();
+                break;
+            case 1:
+                parents = Collections.singletonList(getCommitHash(jgitCommit.getParent(0)));
+                break;
+            default:
+                parents = new ArrayList<>(parentCount);
+                for (int i = 0; i < parentCount; i++) {
+                    parents.add(getCommitHash(jgitCommit.getParent(i)));
+                }
+        }
+        return parents;
     }
 
     private Set<String> getBranches(Git git, String hash) throws GitAPIException {

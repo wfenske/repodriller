@@ -9,7 +9,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -194,7 +193,7 @@ public class SubversionRepository implements SCM {
         Developer committer = new Developer(logEntry.getAuthor(), null);
         Calendar date = convertToCalendar(logEntry.getDate());
         Commit commit = new Commit(String.valueOf(logEntry.getRevision()), null, committer, date, date, logEntry.getMessage(),
-                "");
+                Collections.emptyList());
         return commit;
     }
 
@@ -439,7 +438,7 @@ public class SubversionRepository implements SCM {
     @Override
     public List<BlamedLine> blame(String file, String currentCommit, boolean priorCommit) {
         // pull request me!
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("not implemented");
     }
 
     public Integer getMaxNumberFilesInACommit() {
