@@ -31,6 +31,7 @@ public class SubversionRepository implements SCM {
     private String password;
     private String workingCopyPath;
     private Integer maxNumberFilesInACommit;
+    private boolean includeModifications = true;
 
     public SubversionRepository(String path, String username, String password) {
         this(path, username, password, DEFAULT_MAX_NUMBER_OF_FILES_IN_A_COMMIT);
@@ -167,15 +168,9 @@ public class SubversionRepository implements SCM {
 
                 Commit commit = createCommit(logEntry);
 
-                List<Modification> modifications = getModifications(repository, url, revision,
-                        logEntry);
-
-                if (modifications.size() > this.maxNumberFilesInACommit) {
-                    log.warn("commit " + id + " has more than files than the limit");
-                    throw new RuntimeException("commit " + id + " too big, sorry");
+                if (includeModifications) {
+                    addModifications(id, repository, url, revision, logEntry, commit);
                 }
-
-                commit.addModifications(modifications);
 
                 return commit;
             }
@@ -187,6 +182,18 @@ public class SubversionRepository implements SCM {
                 repository.closeSession();
         }
         return null;
+    }
+
+    private void addModifications(String id, SVNRepository repository, SVNURL url, long revision, SVNLogEntry logEntry, Commit commit) throws SVNException, UnsupportedEncodingException {
+        List<Modification> modifications = getModifications(repository, url, revision,
+                logEntry);
+
+        if (modifications.size() > this.maxNumberFilesInACommit) {
+            log.warn("commit " + id + " has more than files than the limit");
+            throw new RuntimeException("commit " + id + " too big, sorry");
+        }
+
+        commit.addModifications(modifications);
     }
 
     private Commit createCommit(SVNLogEntry logEntry) {
@@ -448,5 +455,10 @@ public class SubversionRepository implements SCM {
     @Override
     public void omitBranches() {
         throw new UnsupportedOperationException("Omitting branches is not supported for Subversion repositories");
+    }
+
+    @Override
+    public void omitModifications() {
+        this.includeModifications = false;
     }
 }

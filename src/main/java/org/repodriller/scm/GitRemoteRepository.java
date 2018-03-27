@@ -158,4 +158,9 @@ public class GitRemoteRepository implements SCM {
     public void omitBranches() {
         tempGitRepository.omitBranches();
     }
+
+    @Override
+    public void omitModifications() {
+        tempGitRepository.omitModifications();
+    }
 }

@@ -67,6 +67,7 @@ public class GitRepository implements SCM {
     private static Logger log = Logger.getLogger(GitRepository.class);
     private boolean firstParentOnly;
     private boolean omitBranches = false;
+    private boolean includeModifications = true;
 
     public GitRepository(String path, boolean firstParentOnly) {
         this.path = path;
@@ -79,8 +80,14 @@ public class GitRepository implements SCM {
         this(path, false);
     }
 
+    @Override
     public void omitBranches() {
         this.omitBranches = true;
+    }
+
+    @Override
+    public void omitModifications() {
+        this.includeModifications = false;
     }
 
     private int checkMaxNumberOfFiles() {
@@ -310,34 +317,8 @@ public class GitRepository implements SCM {
 
                 theCommit = new Commit(hash, author, committer, authorDate, authorTimeZone, committerDate, committerTimeZone, msg, parents, merge, branches, isCommitInMainBranch);
 
-                List<DiffEntry> diffsForTheCommit = diffsForTheCommit(repo, jgitCommit);
-                if (diffsForTheCommit.size() > this.getMaxNumberFilesInACommit()) {
-                    log.warn("commit " + id + " has more than files than the limit");
-                    throw new RuntimeException("commit " + id + " too big (too many files), sorry");
-                }
-
-                for (DiffEntry diff : diffsForTheCommit) {
-
-                    ModificationType change = Enum.valueOf(ModificationType.class,
-                            diff.getChangeType().toString());
-
-                    String oldPath = diff.getOldPath();
-                    String newPath = diff.getNewPath();
-
-                    String diffText = "";
-                    String sc = "";
-                    if (diff.getChangeType() != ChangeType.DELETE) {
-                        diffText = getDiffText(repo, diff);
-                        sc = getSourceCode(repo, diff);
-                    }
-
-                    if (diffText.length() > maxSizeOfDiff) {
-                        log.error("diff for " + newPath + " too big");
-                        diffText = "-- TOO BIG --";
-                    }
-
-                    theCommit.addModification(oldPath, newPath, change, diffText, sc);
-
+                if (includeModifications) {
+                    addModifications(id, repo, theCommit, jgitCommit);
                 }
 
                 break;
@@ -347,6 +328,38 @@ public class GitRepository implements SCM {
         } catch (Exception e) {
             throw new RuntimeException("error detailing " + id + " in " + path, e);
         } finally {
+        }
+    }
+
+    private void addModifications(String id, Repository repo, Commit theCommit, RevCommit jgitCommit) throws IOException {
+        List<DiffEntry> diffsForTheCommit = diffsForTheCommit(repo, jgitCommit);
+        if (diffsForTheCommit.size() > this.getMaxNumberFilesInACommit()) {
+            log.warn("commit " + id + " has more than files than the limit");
+            throw new RuntimeException("commit " + id + " too big (too many files), sorry");
+        }
+
+        for (DiffEntry diff : diffsForTheCommit) {
+
+            ModificationType change = Enum.valueOf(ModificationType.class,
+                    diff.getChangeType().toString());
+
+            String oldPath = diff.getOldPath();
+            String newPath = diff.getNewPath();
+
+            String diffText = "";
+            String sc = "";
+            if (diff.getChangeType() != ChangeType.DELETE) {
+                diffText = getDiffText(repo, diff);
+                sc = getSourceCode(repo, diff);
+            }
+
+            if (diffText.length() > maxSizeOfDiff) {
+                log.error("diff for " + newPath + " too big");
+                diffText = "-- TOO BIG --";
+            }
+
+            theCommit.addModification(oldPath, newPath, change, diffText, sc);
+
         }
     }
 

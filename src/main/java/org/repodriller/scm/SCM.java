@@ -47,4 +47,10 @@ public interface SCM {
      * Turn off getting branch information (possibly slow operation)
      */
     void omitBranches();
+
+    /**
+     * Don't add modifications to commits.  (Sometimes diffs are too big, in which case the corresponding commits are
+     * skipped by repodriller.) Whether or not this operation is actually honored by the SCM is unspecified.
+     */
+    void omitModifications();
 }
